@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 from .models import User, UserFollowing, UserSession
 from .permissions import IsOwnerOrReadOnly, IsUserOrAdmin
-from .serializers import (UserFollowingSerializer, UserProfileSerializer,
+from .serializers import (UserFollowingSerializer,
                           UserSerializer, UserSessionSerializer)
 
 
