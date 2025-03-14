@@ -50,7 +50,8 @@ INSTALLED_APPS = [
     'crispy_tailwind',
     
     # Ton app d'authentification
-    'Accounts',
+    'accounts',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -141,7 +142,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 
-AUTH_USER_MODEL = 'Accounts.User'
+AUTH_USER_MODEL = 'accounts.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
