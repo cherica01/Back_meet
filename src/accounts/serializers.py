@@ -2,33 +2,46 @@
 from rest_framework import serializers
 
 from .models import User, UserFollowing, UserSession
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from rest_framework import serializers
+from .models import User
 
 class UserSerializer(serializers.ModelSerializer):
-    
+
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'bio', 
-                  'photo', 'points', 'role', 'is_verified', 'date_joined', 
-                  'last_active', 'github_url', 'linkedin_url', 'twitter_url', 
-                  'website_url']
-        read_only_fields = ['id', 'points', 'is_verified', 'date_joined', 'last_active']
+        fields = [
+            'id', 'email', 'username', 'first_name', 'last_name', 'gender', 
+            'nationality', 'age', 'profile_picture', 'city', 'country', 
+            'languages', 'followers_count', 'following_count', 'like_count', 
+            'views_count', 'user_type', 'is_verified', 'two_factor_enabled', 
+            'date_joined', 'last_login'
+        ]
+        read_only_fields = ['id', 'followers_count', 'following_count', 'like_count', 
+                            'views_count', 'is_verified', 'date_joined', 'last_login']
         extra_kwargs = {
             'password': {'write_only': True}
         }
 
     def create(self, validated_data):
-
+        """Créer un utilisateur avec un mot de passe sécurisé"""
+        password = validated_data.pop('password', None)
         user = User.objects.create_user(**validated_data)
-
+        if password:
+            user.set_password(password)
+            user.save()
         return user
 
     def update(self, instance, validated_data):
-
-        # Update User fields
+        """Mettre à jour l'utilisateur en gérant le mot de passe correctement"""
+        password = validated_data.pop('password', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
         instance.save()
         return instance
+
 
 
 class UserSessionSerializer(serializers.ModelSerializer):
@@ -46,3 +59,18 @@ class UserFollowingSerializer(serializers.ModelSerializer):
         model = UserFollowing
         fields = ['id', 'following_user', 'following_user_details', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
+
+class InitiateRegistrationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class CompleteRegistrationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=6)
+    username = serializers.CharField(
+        max_length=150,
+        validators=[UnicodeUsernameValidator()]
+    )
+    password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'}
+    )
