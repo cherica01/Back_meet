@@ -51,6 +51,13 @@ INSTALLED_APPS = [
     
     # Ton app d'authentification
     'accounts',
+    'profiles',
+    'messaging',
+    'video_calls',
+    'payments',
+    'favorites',
+    'stories',
+    'notifications',
     'api',
 ]
 
@@ -64,6 +71,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
 ]
 
 
