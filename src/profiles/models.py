@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from Accounts.models import User
+from accounts.models import User
 
 class ModelProfile(models.Model):
     """Profil spécifique pour les utilisateurs de type 'model'"""
