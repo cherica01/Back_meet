@@ -1,51 +1,61 @@
+# accounts/serializers.py
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError
 
-User = get_user_model()
+from .models import User, UserFollowing, UserSession
 
-class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    password2 = serializers.CharField(write_only=True, required=True)
-
+class UserSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = User
-        fields = [
-            'email', 'username', 'password', 'password2', 'gender', 'nationality', 
-            'age', 'profile_picture', 'city', 'country', 'languages', 'user_type'
-        ]
-
-    def validate(self, attrs):
-        if attrs['password'] != attrs['password2']:
-            raise serializers.ValidationError({"password": "Les mots de passe ne correspondent pas."})
-        return attrs
-
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'bio', 
+                  'photo', 'points', 'role', 'is_verified', 'date_joined', 
+                  'last_active', 'github_url', 'linkedin_url', 'twitter_url', 
+                  'website_url', 'profile']
+        read_only_fields = ['id', 'points', 'is_verified', 'date_joined', 'last_active']
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+    
     def create(self, validated_data):
-        validated_data.pop('password2')
+        profile_data = validated_data.pop('profile', None)
         user = User.objects.create_user(**validated_data)
+        
+        if profile_data:
+            UserProfile.objects.create(user=user, **profile_data)
+        else:
+            UserProfile.objects.create(user=user)
+            
         return user
-
-
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-
-    def validate(self, data):
-        user = User.objects.filter(email=data['email']).first()
-        if user and user.check_password(data['password']):
-            return user
-        raise serializers.ValidationError("Identifiants invalides.")
-
-
-class ProfileUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['email', 'username', 'gender', 'nationality', 'age', 'profile_picture', 'city', 'country', 'languages', 'user_type']
-        read_only_fields = ['email']  # On peut rendre l'email en lecture seule si nécessaire
-
+    
     def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile', None)
+        
+        # Update User fields
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+        
+        # Update Profile fields
+        if profile_data and hasattr(instance, 'profile'):
+            for attr, value in profile_data.items():
+                setattr(instance.profile, attr, value)
+            instance.profile.save()
+            
         return instance
+
+
+class UserSessionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserSession
+        fields = ['id', 'session_key', 'ip_address', 'user_agent', 'device_type', 
+                  'location', 'started_at', 'last_activity', 'is_active']
+        read_only_fields = ['id', 'user', 'started_at', 'last_activity']
+
+
+class UserFollowingSerializer(serializers.ModelSerializer):
+    following_user_details = UserSerializer(source='following_user', read_only=True)
+    
+    class Meta:
+        model = UserFollowing
+        fields = ['id', 'following_user', 'following_user_details', 'created_at']
+        read_only_fields = ['id', 'user', 'created_at']
